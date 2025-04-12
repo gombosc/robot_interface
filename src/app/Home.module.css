@@ -1,0 +1,236 @@
+/* All class and animation names are scoped locally by default, preventing naming conflicts and promoting modularity */
+
+.mainContainer {
+    font-family: Arial, sans-serif;
+    background: url('https://images.unsplash.com/photo-1543719621-92ebcae62483?q=80&w=2084&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+}
+
+/* Add an overlay to ensure text readability */
+.mainContainer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(72, 72, 72, 0.7); /* Dark overlay for better contrast */
+    z-index: 1;
+}
+
+/* Ensure all content appears above the overlay */
+.mainContainer > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* Matrix Header Styles */
+.matrixContainer {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 150px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.matrixText {
+    color: #0f0;
+    font-size: 80px;
+    font-family: monospace;
+    position: relative;
+    text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
+    z-index: 2;
+    margin: 0;
+}
+
+.matrixText::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    animation: glitch 2s infinite;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    transform: translate(-2px, -2px);
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0, 0 0 15px #0f0;
+    z-index: 2;
+}
+
+.rain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 255, 0, 0.1) 0,
+        rgba(0, 255, 0, 0.2) 2px,
+        transparent 4px
+    );
+    animation: rain 10s linear infinite;
+    z-index: 1;
+}
+
+@keyframes rain {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes glitch {
+    0%, 100% {
+        clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+        transform: translate(0);
+    }
+    33% {
+        clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%);
+        transform: translate(-5px, -5px);
+    }
+    66% {
+        clip-path: polygon(0 85%, 100% 85%, 100% 100%, 0 100%);
+        transform: translate(5px, 5px);
+    }
+}
+
+/* Layout Styles */
+.layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.controlPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dpad {
+    margin-bottom: 20px;
+}
+
+.dpadGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(3, 60px);
+    gap: 10px;
+    justify-content: center;
+}
+
+.arrowButton {
+    width: 60px;
+    height: 60px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, background-color 0.2s;
+}
+
+.arrowButton:hover {
+    background-color: #45a049;
+}
+
+.pressed {
+    transform: scale(1.1);
+}
+
+.resetButton {
+    width: 120px;
+    height: 60px;
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: background-color 0.2s;
+}
+
+.resetButton:hover {
+    background-color: #e63333;
+}
+
+.divider {
+    width: 2px;
+    height: 400px;
+    background-color: #ccc;
+}
+
+.robotContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.arena {
+    position: relative;
+    width: 300px; /* containerWidth */
+    height: 300px; /* containerHeight */
+    border: 2px solid #0f0;
+    overflow: hidden;
+    background: #222;
+    animation: pulsateBorder 2s infinite;
+}
+
+@keyframes pulsateBorder {
+    0% {
+        border-color: #0f0;
+        box-shadow: 0 0 5px #0f0;
+    }
+    50% {
+        border-color: #0a0;
+        box-shadow: 0 0 20px #0f0;
+    }
+    100% {
+        border-color: #0f0;
+        box-shadow: 0 0 5px #0f0;
+    }
+}
+
+.robot {
+    position: absolute;
+    width: 50px; /* robotWidth */
+    height: 50px; /* robotHeight */
+    background-color: #4caf50;
+    border-radius: 8px;
+    transition: left 0.3s ease, top 0.3s ease;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.stateInfo {
+    margin-top: 20px;
+    font-size: 1.2rem;
+}
+  

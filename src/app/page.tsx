@@ -1,101 +1,179 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import styles from "./Home.module.css";
+
+interface RobotState {
+  x: number;
+  y: number;
+}
+
+type ButtonKey = "forward" | "backward" | "left" | "right";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [robotState, setRobotState] = useState<RobotState>({ x: 0, y: 0 });
+  const [pressedButtons, setPressedButtons] = useState<Record<ButtonKey, boolean>>({
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Arena and robot dimensions
+  const containerWidth = 300;
+  const containerHeight = 300;
+  const robotWidth = 50;
+  const robotHeight = 50;
+  const scale = 20;
+  const startLeft = (containerWidth - robotWidth) / 2;
+  const startTop = (containerHeight - robotHeight) / 2;
+
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:3001");
+
+    socket.onopen = () => {
+      console.log("Connected to WebSocket");
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === "state") {
+        setRobotState(message.data);
+      }
+    };
+
+    setWs(socket);
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const sendCommand = (command: string) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "command", data: command }));
+    }
+  };
+
+  const triggerPressAnimation = (key: ButtonKey) => {
+    setPressedButtons((prev) => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setPressedButtons((prev) => ({ ...prev, [key]: false }));
+    }, 100);
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      event.preventDefault();
+      const key = event.key.toLowerCase();
+      switch (key) {
+        case "arrowup":
+        case "w":
+          sendCommand("forward");
+          triggerPressAnimation("forward");
+          break;
+        case "arrowdown":
+        case "s":
+          sendCommand("backward");
+          triggerPressAnimation("backward");
+          break;
+        case "arrowleft":
+        case "a":
+          sendCommand("left");
+          triggerPressAnimation("left");
+          break;
+        case "arrowright":
+        case "d":
+          sendCommand("right");
+          triggerPressAnimation("right");
+          break;
+        case "r":
+          sendCommand("reset");
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [ws]);
+
+  return (
+    <main className={styles.mainContainer}>
+      <div className={styles.matrixContainer}>
+        <h1 className={styles.matrixText} data-text="Virtual Robot Control">
+          Virtual Robot Control
+        </h1>
+        <div className={styles.rain}></div>
+      </div>
+      <div className={styles.layout}>
+        <div className={styles.controlPanel}>
+          <div className={styles.dpad}>
+            <div className={styles.dpadGrid}>
+              <div></div>
+              <button
+                className={`${styles.arrowButton} ${pressedButtons.forward ? styles.pressed : ""}`}
+                onClick={() => {
+                  sendCommand("forward");
+                  triggerPressAnimation("forward");
+                }}
+              >
+                ↑
+              </button>
+              <div></div>
+              <button
+                className={`${styles.arrowButton} ${pressedButtons.left ? styles.pressed : ""}`}
+                onClick={() => {
+                  sendCommand("left");
+                  triggerPressAnimation("left");
+                }}
+              >
+                ←
+              </button>
+              <div></div>
+              <button
+                className={`${styles.arrowButton} ${pressedButtons.right ? styles.pressed : ""}`}
+                onClick={() => {
+                  sendCommand("right");
+                  triggerPressAnimation("right");
+                }}
+              >
+                →
+              </button>
+              <div></div>
+              <button
+                className={`${styles.arrowButton} ${pressedButtons.backward ? styles.pressed : ""}`}
+                onClick={() => {
+                  sendCommand("backward");
+                  triggerPressAnimation("backward");
+                }}
+              >
+                ↓
+              </button>
+              <div></div>
+            </div>
+          </div>
+          <button className={styles.resetButton} onClick={() => sendCommand("reset")}>
+            Reset
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <div className={styles.divider}></div>
+        <div className={styles.robotContainer}>
+          <div className={styles.arena}>
+            <div
+              className={styles.robot}
+              style={{
+                left: `${startLeft + robotState.x * scale}px`,
+                top: `${startTop + robotState.y * scale}px`,
+              }}
+            />
+          </div>
+          <div className={styles.stateInfo}>
+            <p>
+              X: {robotState.x}, Y: {robotState.y}
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
